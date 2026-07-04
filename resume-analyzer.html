@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Analyzer — Hand it in. Get it graded.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #1B2420;
+    --bg-panel: #212D27;
+    --bg-panel-2: #263630;
+    --paper: #F3EFE2;
+    --paper-shadow: #d8d2bf;
+    --ink: #EAE6D9;
+    --ink-dim: #A9B3AC;
+    --ink-on-paper: #21261E;
+    --red: #C84B3C;
+    --red-dim: #8f382d;
+    --yellow: #E3BE49;
+    --mint: #7FB69E;
+    --line: rgba(234,230,217,0.14);
+    --radius: 4px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .display{font-family:'Fraunces',serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  /* faint chalk-dust texture on the dark background */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      radial-gradient(rgba(234,230,217,0.035) 1px, transparent 1px);
+    background-size: 3px 3px;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  header, main, footer{position:relative; z-index:1;}
+
+  a{color:inherit;}
+
+  /* ---------- header ---------- */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:28px clamp(20px,5vw,64px);
+    border-bottom:1px solid var(--line);
+  }
+  .wordmark{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Fraunces',serif; font-weight:900; font-size:1.15rem;
+    letter-spacing:0.01em;
+  }
+  .wordmark .dot{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--red);
+    box-shadow:0 0 0 3px rgba(200,75,60,0.18);
+  }
+  header nav{font-size:0.8rem; color:var(--ink-dim); letter-spacing:0.04em;}
+  header nav span{margin-left:8px; color:var(--ink);}
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding:clamp(28px,5vw,56px) clamp(20px,5vw,64px) 20px;
+    max-width:1240px; margin:0 auto;
+  }
+  .hero-copy{max-width:640px; margin-bottom:40px;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace; font-size:0.72rem;
+    letter-spacing:0.14em; text-transform:uppercase; color:var(--yellow);
+    display:flex; align-items:center; gap:10px; margin-bottom:18px;
+  }
+  .eyebrow::before{content:""; width:22px; height:1px; background:var(--yellow); display:inline-block;}
+  h1{
+    font-family:'Fraunces',serif; font-weight:900; font-size:clamp(2.1rem,4.6vw,3.4rem);
+    line-height:1.05; margin:0 0 20px; letter-spacing:-0.01em;
+  }
+  h1 em{font-style:italic; font-weight:500; color:var(--yellow);}
+  .hero-copy p{
+    font-size:1.02rem; line-height:1.6; color:var(--ink-dim); max-width:52ch;
+  }
+
+  /* ---------- desk (tool area) ---------- */
+  .desk{
+    display:grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap:28px;
+    align-items:stretch;
+  }
+  @media (max-width: 860px){
+    .desk{grid-template-columns:1fr;}
+  }
+
+  .paper-wrap{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .paper-toolbar{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    flex-wrap:wrap;
+  }
+  .paper-toolbar .label{
+    font-family:'JetBrains Mono',monospace; font-size:0.7rem; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--ink-dim);
+  }
+  .toolbar-actions{display:flex; gap:8px;}
+  .ghost-btn{
+    background:transparent; border:1px solid var(--line); color:var(--ink);
+    font-family:'Inter',sans-serif; font-size:0.78rem; padding:6px 12px;
+    border-radius:100px; cursor:pointer; transition:border-color .15s, color .15s;
+  }
+  .ghost-btn:hover{border-color:var(--yellow); color:var(--yellow);}
+
+  .paper{
+    background:var(--paper);
+    color:var(--ink-on-paper);
+    border:none;
+    border-radius:2px;
+    box-shadow: 0 14px 0 -6px var(--paper-shadow), 0 18px 30px rgba(0,0,0,0.35);
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.86rem;
+    line-height:1.65;
+    padding:24px 22px;
+    width:100%;
+    resize:vertical;
+    min-height:340px;
+  }
+  textarea.paper:focus{outline:2px solid var(--yellow); outline-offset:2px;}
+  #dropHint{
+    font-size:0.72rem; color:var(--ink-dim); text-align:center;
+    border:1px dashed var(--line); border-radius:6px; padding:8px;
+    transition:border-color .15s, color .15s;
+  }
+  #dropHint.dragging{border-color:var(--yellow); color:var(--yellow);}
+  #fileInput{display:none;}
+
+  /* ---------- stamp area ---------- */
+  .stamp-wrap{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:22px;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:28px 16px;
+  }
+  .stamp-stage{
+    position:relative; width:180px; height:180px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .stamp{
+    width:170px; height:170px; border-radius:50%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    transform:rotate(-8deg) scale(1);
+    transition:transform .45s cubic-bezier(.2,1.4,.4,1), opacity .3s, border-color .3s, color .3s;
+  }
+  .stamp.idle{
+    border:2px dashed var(--ink-dim);
+    color:var(--ink-dim);
+  }
+  .stamp.idle .stamp-grade{display:none;}
+  .stamp.idle .stamp-idle-text{
+    font-family:'JetBrains Mono',monospace; font-size:0.66rem; letter-spacing:0.1em;
+    text-transform:uppercase; line-height:1.5; padding:0 20px;
+  }
+  .stamp.graded{
+    border:5px solid var(--red);
+    color:var(--red);
+    filter:url(#roughen);
+    transform:rotate(-6deg) scale(1);
+  }
+  .stamp.graded.stamped{
+    animation: stampDown .38s ease-out;
+  }
+  .stamp.graded .stamp-idle-text{display:none;}
+  .stamp-grade{
+    font-family:'Fraunces',serif; font-weight:900; font-size:2.6rem; line-height:1;
+  }
+  .stamp-score{
+    font-family:'JetBrains Mono',monospace; font-size:0.72rem; letter-spacing:0.06em; margin-top:4px;
+  }
+  @keyframes stampDown{
+    0%{transform:rotate(-6deg) scale(1.9); opacity:0;}
+    60%{transform:rotate(-6deg) scale(0.94); opacity:1;}
+    100%{transform:rotate(-6deg) scale(1);}
+  }
+  #analyzeBtn{
+    background:var(--yellow);
+    color:#21261e;
+    border:none;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:0.92rem;
+    padding:13px 28px;
+    border-radius:100px;
+    cursor:pointer;
+    transition:transform .15s, box-shadow .15s;
+    box-shadow:0 6px 0 -2px #a8892c;
+  }
+  #analyzeBtn:hover{transform:translateY(-1px);}
+  #analyzeBtn:active{transform:translateY(2px); box-shadow:0 3px 0 -2px #a8892c;}
+  #analyzeBtn:disabled{opacity:0.5; cursor:not-allowed;}
+
+  /* ---------- results ---------- */
+  .results{
+    max-width:1240px; margin:0 auto;
+    padding:20px clamp(20px,5vw,64px) 60px;
+    display:grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap:28px;
+    align-items:start;
+  }
+  .results.hidden{display:none;}
+  @media (max-width: 860px){
+    .results{grid-template-columns:1fr;}
+  }
+  .results h2{
+    font-family:'Fraunces',serif; font-weight:600; font-size:1.1rem; margin:0 0 14px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .results h2::before{content:""; width:16px; height:1px; background:var(--ink-dim); display:inline-block;}
+
+  .annotated-col .paper.annotated{
+    white-space:pre-wrap;
+    max-height:640px; overflow-y:auto;
+    min-height:auto;
+    position:relative;
+  }
+  mark{
+    padding:0 1px; border-radius:2px; background:transparent; color:inherit;
+  }
+  mark.issue-weak{ text-decoration:underline wavy var(--red); text-decoration-thickness:1.5px; background:rgba(200,75,60,0.1);}
+  mark.issue-cliche{ background:rgba(227,190,73,0.35); }
+  mark.issue-passive{ text-decoration:underline dotted var(--red-dim); }
+  mark.issue-good{ background:rgba(127,182,158,0.3); }
+
+  .breakdown-col{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:22px;
+  }
+  .overall-line{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--line);
+  }
+  .overall-line .num{font-family:'Fraunces',serif; font-weight:900; font-size:2.4rem; color:var(--yellow);}
+  .overall-line .num span{font-size:1.1rem; color:var(--ink-dim); font-family:'JetBrains Mono',monospace;}
+  .cat{margin-bottom:16px;}
+  .cat-top{display:flex; justify-content:space-between; font-size:0.82rem; margin-bottom:6px;}
+  .cat-top .cat-name{color:var(--ink);}
+  .cat-top .cat-score{font-family:'JetBrains Mono',monospace; color:var(--ink-dim);}
+  .bar-track{height:6px; border-radius:100px; background:rgba(234,230,217,0.1); overflow:hidden;}
+  .bar-fill{height:100%; border-radius:100px; background:var(--mint); transition:width .6s ease;}
+  .bar-fill.warn{background:var(--yellow);}
+  .bar-fill.bad{background:var(--red);}
+
+  .notes{margin-top:22px; padding-top:18px; border-top:1px solid var(--line);}
+  .notes h3{font-size:0.78rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-dim); margin:0 0 12px; font-weight:500;}
+  .note-item{
+    display:flex; gap:10px; font-size:0.85rem; line-height:1.5; margin-bottom:10px; color:var(--ink);
+  }
+  .note-item .mark-dot{
+    width:8px; height:8px; border-radius:50%; margin-top:6px; flex:none;
+  }
+  .dot-red{background:var(--red);}
+  .dot-yellow{background:var(--yellow);}
+  .dot-mint{background:var(--mint);}
+
+  /* ---------- footer ---------- */
+  footer{
+    padding:26px clamp(20px,5vw,64px) 40px;
+    border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    font-size:0.78rem; color:var(--ink-dim);
+    max-width:1240px; margin:0 auto;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <filter id="roughen" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="2" seed="7" result="noise"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="6"/>
+  </filter>
+</svg>
+
+<header>
+  <div class="wordmark"><span class="dot"></span>RESUME ANALYZER</div>
+  <nav>NO UPLOAD. NO SERVER. <span>runs entirely in your browser.</span></nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow">Grading desk</div>
+      <h1>Hand it in.<br>Get it <em>graded</em>.</h1>
+      <p>Paste your resume below. You'll get a report card — a letter grade, a category breakdown, and margin notes on exactly what a hiring manager would flag first.</p>
+    </div>
+
+    <div class="desk">
+      <div class="paper-wrap">
+        <div class="paper-toolbar">
+          <span class="label">Your resume</span>
+          <div class="toolbar-actions">
+            <button class="ghost-btn" id="exampleBtn" type="button">Use an example</button>
+            <button class="ghost-btn" id="uploadBtn" type="button">Upload .txt</button>
+            <input type="file" id="fileInput" accept=".txt">
+          </div>
+        </div>
+        <textarea id="resumeInput" class="paper" placeholder="Paste the full text of your resume here — experience, education, skills, all of it..."></textarea>
+        <div id="dropHint">or drop a .txt file anywhere on the page</div>
+      </div>
+
+      <div class="stamp-wrap">
+        <div class="stamp-stage">
+          <div class="stamp idle" id="stamp">
+            <div class="stamp-idle-text">Awaiting<br>submission</div>
+            <div class="stamp-grade" id="stampGrade"></div>
+            <div class="stamp-score" id="stampScore"></div>
+          </div>
+        </div>
+        <button id="analyzeBtn" type="button">Analyze my resume</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="results hidden" id="results">
+    <div class="annotated-col">
+      <h2>Marked up</h2>
+      <div class="paper annotated" id="annotatedPaper"></div>
+    </div>
+    <aside class="breakdown-col">
+      <h2>Report card</h2>
+      <div class="overall-line">
+        <div>
+          <div style="font-size:0.75rem; color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.06em;">Overall</div>
+          <div class="num" id="overallNum">0<span>/100</span></div>
+        </div>
+      </div>
+      <div id="categories"></div>
+      <div class="notes">
+        <h3>Margin notes</h3>
+        <div id="notesList"></div>
+      </div>
+    </aside>
+  </section>
+</main>
+
+<footer>
+  <span>Everything is scored with plain heuristics, right here in your browser — nothing you paste is ever sent anywhere.</span>
+  <span>A rough read, not a verdict.</span>
+</footer>
+
+<script>
+(function(){
+  const resumeInput = document.getElementById('resumeInput');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const stamp = document.getElementById('stamp');
+  const stampGrade = document.getElementById('stampGrade');
+  const stampScore = document.getElementById('stampScore');
+  const results = document.getElementById('results');
+  const annotatedPaper = document.getElementById('annotatedPaper');
+  const categoriesEl = document.getElementById('categories');
+  const notesList = document.getElementById('notesList');
+  const overallNum = document.getElementById('overallNum');
+  const exampleBtn = document.getElementById('exampleBtn');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const fileInput = document.getElementById('fileInput');
+  const dropHint = document.getElementById('dropHint');
+
+  const WEAK_PHRASES = [
+    'responsible for','duties included','worked on','helped with','in charge of',
+    'tasked with','involved in','participated in','assisted with','duties consisted of'
+  ];
+  const CLICHES = [
+    'hardworking','team player','detail-oriented','detail oriented','go-getter',
+    'think outside the box','results-driven','results driven','self-starter',
+    'synergy','dynamic individual','proactive','excellent communication skills',
+    'fast learner','passionate about','hard worker','people person','out-of-the-box'
+  ];
+  const STRONG_VERBS = [
+    'led','built','launched','designed','architected','drove','scaled','reduced',
+    'increased','negotiated','spearheaded','orchestrated','delivered','shipped',
+    'optimized','automated','mentored','secured','generated','cut','grew',
+    'streamlined','transformed','pioneered','established','restructured',
+    'accelerated','exceeded','won','saved','implemented','engineered','resolved',
+    'migrated','created','directed','launched','improved','coordinated',
+    'developed','managed','executed','initiated'
+  ];
+  const CORE_SECTIONS = [
+    {name:'experience', patterns:['experience','employment history','work history']},
+    {name:'education', patterns:['education']},
+    {name:'skills', patterns:['skills','technical skills','core competencies']},
+    {name:'summary', patterns:['summary','objective','profile']}
+  ];
+
+  function escapeHtml(str){
+    return str.replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function countMatches(text, phrases){
+    let count = 0;
+    const found = new Set();
+    phrases.forEach(p => {
+      const re = new RegExp('\\b' + p.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b','gi');
+      const m = text.match(re);
+      if(m){ count += m.length; found.add(p); }
+    });
+    return {count, found};
+  }
+
+  function analyze(rawText){
+    const text = rawText;
+    const lower = text.toLowerCase();
+    const words = text.trim().split(/\s+/).filter(Boolean);
+    const wordCount = words.length;
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+    // 1. Contact info (10 pts)
+    const hasEmail = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(text);
+    const hasPhone = /(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/.test(text);
+    const hasProfile = /linkedin\.com|github\.com/i.test(text);
+    let contactScore = (hasEmail?5:0) + (hasPhone?3:0) + (hasProfile?2:0);
+
+    // 2. Sections (15 pts)
+    let sectionsFound = 0;
+    CORE_SECTIONS.forEach(sec => {
+      if(sec.patterns.some(p => lower.includes(p))) sectionsFound++;
+    });
+    const sectionScore = Math.round((sectionsFound / CORE_SECTIONS.length) * 15);
+
+    // 3. Action verbs vs weak phrases (25 pts)
+    const strongHits = countMatches(lower, STRONG_VERBS);
+    const weakHits = countMatches(lower, WEAK_PHRASES);
+    let verbScore = Math.min(strongHits.count, 15) / 15 * 20;
+    verbScore -= Math.min(weakHits.count * 2, 10);
+    verbScore = Math.max(0, Math.min(25, Math.round(verbScore + 5)));
+
+    // 4. Quantified impact (20 pts)
+    const metricMatches = text.match(/(\$\s?\d[\d,.]*|\d+(\.\d+)?\s?%|\b\d+x\b|\b\d{2,}\+?\b)/g) || [];
+    const bulletLines = lines.filter(l => /^[-•*\u2022]/.test(l) || /^\d+[\.\)]/.test(l));
+    const bulletCount = Math.max(bulletLines.length, 1);
+    const metricRatio = Math.min(metricMatches.length / bulletCount, 1);
+    const metricScore = Math.round(metricRatio * 20);
+
+    // 5. Clichés (10 pts)
+    const clicheHits = countMatches(lower, CLICHES);
+    const clicheScore = Math.max(0, 10 - clicheHits.count * 2);
+
+    // 6. Length (10 pts)
+    let lengthScore;
+    if(wordCount >= 350 && wordCount <= 800) lengthScore = 10;
+    else if(wordCount >= 200 && wordCount < 350) lengthScore = 7;
+    else if(wordCount > 800 && wordCount <= 1100) lengthScore = 7;
+    else if(wordCount < 200) lengthScore = 3;
+    else lengthScore = 4;
+
+    // 7. Passive voice (10 pts)
+    const passiveMatches = text.match(/\b(was|were|is|are|been|being|be)\s+\w+ed\b/gi) || [];
+    const passiveScore = Math.max(0, 10 - passiveMatches.length);
+
+    const total = contactScore + sectionScore + verbScore + metricScore + clicheScore + lengthScore + passiveScore;
+
+    return {
+      total: Math.round(total),
+      wordCount,
+      categories: [
+        {name:'Contact info', score:contactScore, max:10},
+        {name:'Section structure', score:sectionScore, max:15},
+        {name:'Action verbs', score:verbScore, max:25},
+        {name:'Quantified impact', score:metricScore, max:20},
+        {name:'Clichés avoided', score:clicheScore, max:10},
+        {name:'Length', score:lengthScore, max:10},
+        {name:'Active voice', score:passiveScore, max:10},
+      ],
+      details:{
+        hasEmail, hasPhone, hasProfile, sectionsFound,
+        strongCount: strongHits.count, weakFound: [...weakHits.found],
+        metricCount: metricMatches.length, bulletCount: bulletLines.length,
+        clicheFound: [...clicheHits.found], passiveCount: passiveMatches.length,
+        wordCount
+      }
+    };
+  }
+
+  function gradeFor(score){
+    if(score >= 97) return 'A+';
+    if(score >= 93) return 'A';
+    if(score >= 90) return 'A-';
+    if(score >= 87) return 'B+';
+    if(score >= 83) return 'B';
+    if(score >= 80) return 'B-';
+    if(score >= 77) return 'C+';
+    if(score >= 70) return 'C';
+    if(score >= 60) return 'D';
+    return 'F';
+  }
+
+  function barClass(score, max){
+    const pct = score / max;
+    if(pct >= 0.75) return '';
+    if(pct >= 0.45) return 'warn';
+    return 'bad';
+  }
+
+  function buildAnnotated(text, details){
+    let escaped = escapeHtml(text);
+    WEAK_PHRASES.forEach(p => {
+      const re = new RegExp('\\b(' + p.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')\\b','gi');
+      escaped = escaped.replace(re, '<mark class="issue-weak">$1</mark>');
+    });
+    CLICHES.forEach(p => {
+      const re = new RegExp('\\b(' + p.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')\\b','gi');
+      escaped = escaped.replace(re, '<mark class="issue-cliche">$1</mark>');
+    });
+    escaped = escaped.replace(/\b((was|were|is|are|been|being|be)\s+\w+ed)\b/gi, '<mark class="issue-passive">$1</mark>');
+    escaped = escaped.replace(/(\$\s?\d[\d,.]*|\d+(\.\d+)?\s?%|\b\d+x\b)/g, '<mark class="issue-good">$1</mark>');
+    return escaped;
+  }
+
+  function buildNotes(details){
+    const notes = [];
+    if(!details.hasEmail) notes.push({dot:'dot-red', text:'No email address found — a recruiter needs a way to reach you.'});
+    if(!details.hasPhone) notes.push({dot:'dot-yellow', text:'No phone number detected. Optional, but common for U.S. resumes.'});
+    if(details.sectionsFound < 3) notes.push({dot:'dot-red', text:'Missing standard sections — make sure Experience, Education, and Skills all have clear headers.'});
+    if(details.weakFound.length) notes.push({dot:'dot-red', text:'Weak, passive framing like "' + details.weakFound[0] + '" shows up — swap it for what you actually did.'});
+    if(details.strongCount < 5) notes.push({dot:'dot-yellow', text:'Not many strong action verbs. Open bullets with what you did: built, led, cut, launched.'});
+    if(details.metricCount < details.bulletCount * 0.4) notes.push({dot:'dot-yellow', text:'Most bullets have no numbers. Impact reads stronger with a %, $, or count attached.'});
+    if(details.clicheFound.length) notes.push({dot:'dot-yellow', text:'Filler phrases like "' + details.clicheFound[0] + '" don\'t tell a hiring manager anything concrete.'});
+    if(details.passiveCount > 3) notes.push({dot:'dot-red', text:'Passive voice shows up often — "was responsible" reads weaker than "owned."'});
+    if(details.wordCount < 200) notes.push({dot:'dot-red', text:'This reads short. Most one-page resumes land between 350–650 words.'});
+    if(details.wordCount > 1100) notes.push({dot:'dot-yellow', text:'This runs long — tighten it toward one page unless you have 10+ years of relevant experience.'});
+    if(!notes.length) notes.push({dot:'dot-mint', text:'Clean pass — no major red flags in the heuristics checked here.'});
+    return notes;
+  }
+
+  function runAnalysis(){
+    const text = resumeInput.value;
+    if(!text.trim()){
+      resumeInput.focus();
+      resumeInput.style.outline = '2px solid var(--red)';
+      setTimeout(() => resumeInput.style.outline = '', 900);
+      return;
+    }
+
+    const result = analyze(text);
+    const grade = gradeFor(result.total);
+
+    stamp.classList.remove('idle');
+    stamp.classList.add('graded');
+    stamp.classList.remove('stamped');
+    void stamp.offsetWidth;
+    stamp.classList.add('stamped');
+    stampGrade.textContent = grade;
+    stampScore.textContent = result.total + ' / 100';
+
+    overallNum.innerHTML = result.total + '<span>/100</span>';
+
+    categoriesEl.innerHTML = result.categories.map(c => `
+      <div class="cat">
+        <div class="cat-top"><span class="cat-name">${c.name}</span><span class="cat-score">${c.score}/${c.max}</span></div>
+        <div class="bar-track"><div class="bar-fill ${barClass(c.score,c.max)}" style="width:${(c.score/c.max*100)}%"></div></div>
+      </div>
+    `).join('');
+
+    annotatedPaper.innerHTML = buildAnnotated(text, result.details);
+
+    const notes = buildNotes(result.details);
+    notesList.innerHTML = notes.map(n => `
+      <div class="note-item"><span class="mark-dot ${n.dot}"></span><span>${escapeHtml(n.text)}</span></div>
+    `).join('');
+
+    results.classList.remove('hidden');
+    results.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  analyzeBtn.addEventListener('click', runAnalysis);
+
+  exampleBtn.addEventListener('click', () => {
+    resumeInput.value = `Jordan Ellis
+jordan.ellis@email.com | (555) 214-8890 | linkedin.com/in/jordanellis
+
+SUMMARY
+Hardworking and detail-oriented professional with excellent communication skills, looking for a team player role.
+
+EXPERIENCE
+Marketing Coordinator, Northwind Retail — 2021 to Present
+- Responsible for managing social media accounts
+- Helped with email campaigns and worked on the company blog
+- Was involved in planning the annual customer event
+- Assisted with vendor communications
+
+Marketing Intern, Fenwick Group — 2020 to 2021
+- Duties included data entry and scheduling
+- Participated in weekly team meetings
+
+EDUCATION
+B.A. Communications, State University, 2020
+
+SKILLS
+Microsoft Office, Social Media, Team Player, Fast Learner`;
+    dropHint.textContent = 'Example loaded — try analyzing it, then compare against your own.';
+  });
+
+  uploadBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { resumeInput.value = reader.result; };
+    reader.readAsText(file);
+  });
+
+  ['dragover','dragenter'].forEach(evt => {
+    document.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropHint.classList.add('dragging');
+    });
+  });
+  ['dragleave','drop'].forEach(evt => {
+    document.addEventListener(evt, () => dropHint.classList.remove('dragging'));
+  });
+  document.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if(!file) return;
+    if(!file.name.toLowerCase().endsWith('.txt')){
+      dropHint.textContent = 'Only .txt files can be read this way — paste the text instead.';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => { resumeInput.value = reader.result; };
+    reader.readAsText(file);
+  });
+})();
+</script>
+</body>
+</html>
